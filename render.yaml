@@ -1,13 +1,41 @@
+# render.yaml
+
 services:
-  - type: docker
-    name: my-laravel-docker-app
-    dockerfilePath: ./dockerfile
-    env: php
-    buildCommand: composer install --optimize-autoloader --no-dev && npm install && npm run build
-    startCommand: php artisan serve --host=0.0.0.0 --port=8000
+  - type: web
+    name: one11-capstone-app
+
+    # Tiyakin na ang file name sa repo ay "Dockerfile" (case sensitive)
+    dockerfilePath: Dockerfile
+
+    # Ang port ay dapat 80 dahil Apache ang ginagamit sa Dockerfile
+    port: 80
+
+    # Gumamit ng free plan
+    plan: free
+
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_KEY
         value: base64:rhjBiMBRnOVM+7agq0/jEKKzLyCBU4GfzoE1CZt7v6o=
-      # Add other environment variables here
+
+      # 🚨 LARAVEL DATABASE CONNECTION VARIABLES
+      - key: DB_CONNECTION
+        value: mysql
+
+      # Gamitin ang Railway Private Domain (pinaka-stable)
+      - key: DB_HOST
+        value: ${{RAILWAY_PRIVATE_DOMAIN}}
+
+      - key: DB_PORT
+        value: "3306"
+
+      - key: DB_DATABASE
+        value: railway
+
+      - key: DB_USERNAME
+        value: root
+
+      # Ginamit ang iyong static na password mula sa Railway
+      - key: DB_PASSWORD
+        value: mZvHHelXdYQpAWwLXxZmSANbWrWOaanV
