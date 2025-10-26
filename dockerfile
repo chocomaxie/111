@@ -23,7 +23,7 @@ COPY . /var/www/html
 # I-set ang work directory
 WORKDIR /var/www/html
 
-# Install Composer dependencies (Tandaan: Ginamit ang --no-scripts para iwasan ang error)
+# Install Composer dependencies (Gamit ang --no-scripts fix)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # I-run ang Node/Vite build para sa React/Inertia assets
@@ -36,13 +36,16 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 RUN a2dissite 000-default.conf
 RUN a2enmod rewrite
 
-# Gumawa ng custom VirtualHost config at i-enable ito
-# (Ang file na ito ay nasa Section 2)
+# I-COPY ang custom Apache config
 COPY docker/001-laravel.conf /etc/apache2/sites-available/
 RUN a2ensite 001-laravel.conf
 
-# Linisin ang cache (opsyonal, pero makakatulong)
+# Linisin ang cache
 RUN php artisan optimize:clear
 
-# CMD: Hindi na tayo magpapatakbo ng server dito. Hahayaan natin ang Render Start Command.
-CMD ["/bin/true"]
+# Copy ang custom entrypoint script at gawin itong executable
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# CMD: Gamitin ang script para patakbuhin ang lahat ng startup commands
+CMD ["entrypoint.sh"]
