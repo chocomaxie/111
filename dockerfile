@@ -26,19 +26,15 @@ WORKDIR /var/www/html
 # Install Composer dependencies (Gamit ang --no-scripts fix)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# I-run ang Node/Vite build
-RUN npm install && npm run build
+# I-run ang Node/Vite build (ANG BAGONG FIX DITO: --legacy-peer-deps)
+RUN npm install --legacy-peer-deps && npm run build
 
 # I-set ang tamang permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# --- NEW SOLUTION AREA ---
-
-# Tanggalin ang default VHost at i-enable ang rewrite module
+# Direktang i-create ang Apache config sa loob ng Docker
 RUN a2dissite 000-default.conf
 RUN a2enmod rewrite
-
-# **DIRKETANG I-CREATE** ang Apache config sa loob ng Docker
 RUN echo "<VirtualHost *:80>\n" > /etc/apache2/sites-available/001-laravel.conf && \
     echo "    DocumentRoot /var/www/html/public\n" >> /etc/apache2/sites-available/001-laravel.conf && \
     echo "    <Directory /var/www/html/public>\n" >> /etc/apache2/sites-available/001-laravel.conf && \
@@ -47,11 +43,7 @@ RUN echo "<VirtualHost *:80>\n" > /etc/apache2/sites-available/001-laravel.conf 
     echo "        Require all granted\n" >> /etc/apache2/sites-available/001-laravel.conf && \
     echo "    </Directory>\n" >> /etc/apache2/sites-available/001-laravel.conf && \
     echo "</VirtualHost>" >> /etc/apache2/sites-available/001-laravel.conf
-
-# I-enable ang bagong site
 RUN a2ensite 001-laravel.conf
-
-# --- END NEW SOLUTION AREA ---
 
 # Linisin ang cache
 RUN php artisan optimize:clear
