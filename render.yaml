@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: my-laravel-app
+    env: php
+    buildCommand: composer install --optimize-autoloader --no-dev && npm install && npm run build
+    startCommand: php artisan serve --host=0.0.0.0 --port=8000
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        value: base64:rhjBiMBRnOVM+7agq0/jEKKzLyCBU4GfzoE1CZt7v6o=
+      # Add other environment variables here
