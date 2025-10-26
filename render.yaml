@@ -14,12 +14,11 @@ services:
       - key: APP_KEY
         value: base64:rhjBiMBRnOVM+7agq0/jEKKzLyCBU4GfzoE1CZt7v6o=
 
-      # 🚨 LARAVEL DATABASE CONNECTION VARIABLES (Gamit ang static values mo)
+      # 🚨 LARAVEL DATABASE CONNECTION VARIABLES
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
-        # Paki-palitan ito ng ACTUAL PRIVATE HOSTNAME STRING galing sa Railway
-        # (Hindi na ang ${{...}} variable) kung hindi gumagana.
+        # Paki-palitan ito ng ACTUAL PRIVATE HOSTNAME STRING galing sa Railway kung hindi gumana.
         value: ${{RAILWAY_PRIVATE_DOMAIN}}
       - key: DB_PORT
         value: "3306"

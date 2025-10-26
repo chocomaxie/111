@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js (v18)
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+# 🚨 NODE VERSION FIX (UPGRADE TO V20)
+RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
 
 # Copy ang lahat ng files sa loob ng container
@@ -26,8 +26,8 @@ WORKDIR /var/www/html
 # Install Composer dependencies (Bypass package:discover error)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# --- NODE/NPM FIX ---
-# Forced install: Pwersahin ang pag-install ng lahat ng packages, kasama ang @vitejs/plugin-react
+# --- NODE/NPM BUILD ---
+# Forced install: Pwersahin ang pag-solve ng conflicts
 RUN npm install --legacy-peer-deps
 RUN npm run build
 # --------------------
