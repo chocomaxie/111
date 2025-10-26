@@ -1,77 +1,67 @@
-# 1. BUILD STAGE (Para i-install ang Composer dependencies)
-FROM php:8.3-fpm-alpine AS composer
+# 1. BUILD STAGE (Gumamit ng PHP-Apache base)
+FROM php:8.3-apache AS composer
 
-# Install Composer dependencies at iba pang kailangan
-RUN apk add --no-cache git libzip-dev
-RUN docker-php-ext-install zip
+# Install System Dependencies (para sa Composer at Extensions)
+RUN apt-get update && apt-get install -y \
+    git \
+    libzip-dev \
+    unzip \
+    nodejs \
+    npm
+
+# Install PHP Extensions
+# 🚨 I-INSTALL ANG DRIVER NA NAG-CA-CAUSE NG 'could not find driver' ERROR
+RUN docker-php-ext-install pdo pdo_mysql zip opcache gd exif bcmath pcntl
 
 # Install Composer globally
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /app
+WORKDIR /var/www/html
 
 # Copy application code
-COPY . /app
+COPY . /var/www/html
 
 # Run Composer installation
-# --ignore-platform-reqs para maiwasan ang PHP version conflicts sa local machine at container
 RUN composer install --no-dev --prefer-dist --ignore-platform-reqs
 
 # ----------------------------------------------------------------------------------------------------
 
-# 2. APPLICATION STAGE (Ang Final, Slim Image)
-FROM php:8.3-fpm-alpine AS final
+# 2. APPLICATION STAGE (Ang Final Image)
+FROM php:8.3-apache AS final
 
-# Install System Dependencies: Git, Node.js (para sa Vite/NPM build)
-RUN apk add --no-cache \
-    git \
-    nodejs \
-    npm \
-    # 🚨 I-INSTALL ANG PHP EXTENSIONS (MAHALAGA PARA SA DATABASE CONNECTION)
-    php-pdo \
-    php-pdo_mysql \
-    # Iba pang karaniwang kailangan sa Laravel/PHP
-    php-dom \
-    php-xml \
-    php-zip \
-    php-gd \
-    php-json \
-    php-mbstring \
-    php-fileinfo
+# Install Node.js (Kung hindi mo ito ginawa sa base image)
+RUN apt-get update && apt-get install -y nodejs npm
 
-# Set working directory
+# Copy code and vendor from build stage
 WORKDIR /var/www/html
-
-# Copy application files (excluding node_modules/vendor)
-COPY --from=composer /app /var/www/html
-
-# Copy Composer vendor files
-COPY --from=composer /usr/bin/composer /usr/bin/composer
-
-# Copy Vendor dependencies from the build stage
-COPY --from=composer /app/vendor /var/www/html/vendor
+COPY --from=composer /var/www/html /var/www/html
 
 # 🚨 Frontend Build (Vite/NPM)
-# Install frontend dependencies (Gumamit ng npm install na walang --legacy-peer-deps para ma-force ang clean install)
 RUN npm install
-# Run Vite build
 RUN npm run build
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# 🚨 I-SET ANG APACHE DOCUMENT ROOT (Kung hindi pa na-set up ang virtual host)
+# Tiyakin na ang Apache ay tumuturo sa public folder ng Laravel
+RUN a2enmod rewrite
+# Create virtual host config for Laravel's public folder
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+# Note: Kailangan mo ring i-create ang '000-default.conf' file na ito sa baba.
+
 # 🚨 COPY ENTRYPOINT SCRIPT
-# Tiyakin na ang entrypoint.sh ay nandoon sa root ng iyong project
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port (Kung saan nakikinig ang FPM)
-EXPOSE 9000
+# 🚨 EXPOSE standard HTTP port 80
+EXPOSE 80
 
-# Run the entrypoint script
+# 🚨 RUN THE ENTRYPOINT SCRIPT BAGO SIMULAN ANG APACHE
+# Ito ay tumatakbo at mag-mi-migrate, pagkatapos ay ipapasa ang control sa Apache.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Default command (Ito ang huling command na tatakbo pagkatapos ng entrypoint)
-CMD ["php-fpm"]
+# 🚨 Ang default command ng php:apache image ay magpapatakbo ng Apache
+CMD ["apache2-foreground"]
