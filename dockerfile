@@ -1,37 +1,48 @@
-# Use PHP 8.1 CLI as the base image
-FROM php:8.2-fpm
+# Base image: PHP 8.2 with Apache
+FROM php:8.2-apache
 
-# Install system dependencies
+# Install System Dependencies (para sa git, zip, atbp.)
 RUN apt-get update && apt-get install -y \
     git \
-    unzip \
-    curl \
-    libpng-dev \
+    libpq-dev \
     libonig-dev \
-    libxml2-dev \
-    nodejs \
-    npm
+    zip \
+    unzip \
+    libzip-dev
 
-# Install Composer globally
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /app
+# Install Node.js (v18) para sa React/Vite build
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
 
-# Copy composer files only to leverage Docker cache
-COPY composer.json composer.lock /app/
+# Copy ang lahat ng files sa loob ng container
+COPY . /var/www/html
 
-# Install dependencies without dev packages, optimize autoloader
-RUN composer install --no-dev --optimize-autoloader
+# I-set ang work directory
+WORKDIR /var/www/html
 
-# Copy the rest of the application code
-COPY . /app
+# Install Composer dependencies (Tandaan: Ginamit ang --no-scripts para iwasan ang error)
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Optional: set permissions
-RUN chown -R www-data:www-data /app
+# I-run ang Node/Vite build para sa React/Inertia assets
+RUN npm install && npm run build
 
-# Expose port if running a web server (if applicable)
-EXPOSE 8000
+# I-set ang tamang permissions para makapagsulat ang storage
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Command to run your app (for example, Laravel's artisan serve)
-CMD ["php", "artisan", "serve", "--host=0.0.0.0"]
+# I-disable ang default VirtualHost at i-enable ang rewrite module
+RUN a2dissite 000-default.conf
+RUN a2enmod rewrite
+
+# Gumawa ng custom VirtualHost config at i-enable ito
+# (Ang file na ito ay nasa Section 2)
+COPY docker/001-laravel.conf /etc/apache2/sites-available/
+RUN a2ensite 001-laravel.conf
+
+# Linisin ang cache (opsyonal, pero makakatulong)
+RUN php artisan optimize:clear
+
+# CMD: Hindi na tayo magpapatakbo ng server dito. Hahayaan natin ang Render Start Command.
+CMD ["/bin/true"]
