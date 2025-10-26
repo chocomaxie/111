@@ -1,15 +1,15 @@
-# 1. BUILD STAGE (Gumagamit ng PHP-Apache base image)
+# 1. BUILD STAGE (Gumagamit ng PHP-Apache base image para sa unified setup)
 FROM php:8.3-apache AS composer
 
 # Install System Dependencies (para sa Composer, Node, at Extensions BUILD)
-# Tiyaking ang apt-get update ay tumatakbo bago ang install.
 RUN apt-get update && apt-get install -y \
     git \
     libzip-dev \
     unzip \
+    # Node/NPM ay kailangan dito para makita ng mga NPM packages ang Node sa build process
     nodejs \
     npm \
-    # 🚨 FIX PARA SA 'libpng' ERROR: KINAKAILANGAN NG GD EXTENSION
+    # 🚨 FIX PARA SA 'libpng' ERROR: DEVELOPMENT PACKAGES NG GD
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -29,10 +29,9 @@ COPY . /var/www/html
 # Run Composer installation
 RUN composer install --no-dev --prefer-dist --ignore-platform-reqs
 
-# 🚨 I-INSTALL ANG PHP EXTENSIONS SA COMPOSER STAGE (Mas madaling i-build dito)
-# FIX PARA SA 'could not find driver' (pdo_mysql)
+# 🚨 I-INSTALL ANG PHP EXTENSIONS (FIX PARA SA 'could not find driver')
 RUN docker-php-ext-install pdo pdo_mysql zip opcache exif bcmath pcntl mbstring \
-    # I-configure at I-install ang GD Extension (Gumagamit ng mga na-install na dev packages)
+    # I-configure at I-install ang GD Extension
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd
 
@@ -41,6 +40,10 @@ RUN docker-php-ext-install pdo pdo_mysql zip opcache exif bcmath pcntl mbstring 
 # 2. APPLICATION STAGE (Ang Final, Optimized Image)
 FROM php:8.3-apache AS final
 
+# 🚨 FIX PARA SA 'npm: not found' ERROR: I-INSTALL ULIT ANG NODE/NPM SA FINAL STAGE
+# Dahil ang final stage ay nag-uumpisa sa "clean slate" at hindi kasama ang Node/NPM
+RUN apt-get update && apt-get install -y nodejs npm
+
 # Copy code and vendor from build stage
 WORKDIR /var/www/html
 COPY --from=composer /var/www/html /var/www/html
@@ -48,8 +51,7 @@ COPY --from=composer /var/www/html /var/www/html
 # I-copy ang Composer executable (para sa artisan commands)
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 
-# 🚨 Frontend Build (Vite/NPM)
-# Node/NPM ay kasama na sa php:8.3-apache base image natin
+# 🚨 Frontend Build (Vite/NPM) - GAGANA NA ITO NGAYON
 RUN npm install
 RUN npm run build
 
@@ -58,16 +60,12 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 🚨 APACHE CONFIGURATION (FIX PARA SA 'No open HTTP ports')
-# I-enable ang rewrite module
 RUN a2enmod rewrite
 # I-copy ang custom VHost config
-# 🚨 MAHALAGA: Dapat may 000-default.conf file sa root folder mo!
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
-# I-disable ang default VHost
+# Tiyakin na ang 000-default.conf ay nasa root folder mo!
 RUN a2dissite 000-default.conf
-# I-enable ang bagong config (optional, pero minsan kailangan)
 RUN a2ensite 000-default.conf
-
 
 # 🚨 COPY ENTRYPOINT SCRIPT (Para sa Migrations)
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
