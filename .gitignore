@@ -1,24 +1,33 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
 /vendor
+
+# Laravel Specific
+.env
+.env.backup
+.env.production
+/.nova
+/auth.json
+/storage/*.log
+/storage/*.key
+
+# Build Artifacts
+/public/build # Kailangan itong i-ignore kung gagawin mo ang 'npm run build' sa production server. Kung sa local ka mag-bu-build, tanggalin ang line na ito.
+
+# OS and Editor Specific
+.DS_Store
+Thumbs.db
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.phpunit.cache
+/.vscode
+/.zed
+
+# Homestead and Environment Files
 Homestead.json
 Homestead.yaml
-Thumbs.db
