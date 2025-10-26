@@ -1,7 +1,7 @@
 # Base image: PHP 8.2 with Apache
 FROM php:8.2-apache
 
-# Install System Dependencies (para sa git, zip, atbp.)
+# Install System Dependencies
 RUN apt-get update && apt-get install -y \
     git \
     libpq-dev \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install Node.js (v18) para sa React/Vite build
+# Install Node.js (v18)
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
 
@@ -26,24 +26,37 @@ WORKDIR /var/www/html
 # Install Composer dependencies (Gamit ang --no-scripts fix)
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# I-run ang Node/Vite build para sa React/Inertia assets
+# I-run ang Node/Vite build
 RUN npm install && npm run build
 
-# I-set ang tamang permissions para makapagsulat ang storage
+# I-set ang tamang permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# I-disable ang default VirtualHost at i-enable ang rewrite module
+# --- NEW SOLUTION AREA ---
+
+# Tanggalin ang default VHost at i-enable ang rewrite module
 RUN a2dissite 000-default.conf
 RUN a2enmod rewrite
 
-# I-COPY ang custom Apache config
-COPY docker/001-laravel.conf /etc/apache2/sites-available/
+# **DIRKETANG I-CREATE** ang Apache config sa loob ng Docker
+RUN echo "<VirtualHost *:80>\n" > /etc/apache2/sites-available/001-laravel.conf && \
+    echo "    DocumentRoot /var/www/html/public\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "    <Directory /var/www/html/public>\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "        Options Indexes FollowSymLinks\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "        AllowOverride All\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "        Require all granted\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "    </Directory>\n" >> /etc/apache2/sites-available/001-laravel.conf && \
+    echo "</VirtualHost>" >> /etc/apache2/sites-available/001-laravel.conf
+
+# I-enable ang bagong site
 RUN a2ensite 001-laravel.conf
+
+# --- END NEW SOLUTION AREA ---
 
 # Linisin ang cache
 RUN php artisan optimize:clear
 
-# Copy ang custom entrypoint script at gawin itong executable
+# Copy entrypoint script at gawin itong executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
