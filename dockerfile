@@ -46,7 +46,7 @@ RUN echo "<VirtualHost *:80>\n" > /etc/apache2/sites-available/001-laravel.conf 
 RUN a2ensite 001-laravel.conf
 
 # Linisin ang cache
-RUN php artisan optimize:clear
+# RUN php artisan optimize:clear
 
 # Copy entrypoint script at gawin itong executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh

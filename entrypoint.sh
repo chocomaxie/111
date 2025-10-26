@@ -5,6 +5,7 @@ php artisan key:generate
 php artisan config:clear
 php artisan package:discover --ansi
 php artisan migrate --force
+php artisan optimize:clear  # <--- IDINAGDAG DITO
 
 # Start the Apache server in the foreground
 apache2-foreground
