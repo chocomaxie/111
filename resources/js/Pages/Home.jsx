@@ -20,13 +20,21 @@
 // }
 
 
+// resources/js/Pages/Home.jsx
+
+import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 
-import adoption from "../images/adoption.png";
-import shelter from "../images/animal-shelter.png";
+// 🚨 CHECK THE PATH: Kung ang images ay nasa resources/images,
+// Subukan nating i-set ang path galing sa root ng assets o public.
+// Para sa karamihan ng modern setups, kailangan mo ng tamang relative path:
+// Kung ang Home.jsx ay nasa resources/js/Pages, ang images ay nasa resources/images
+// Dapat itong maging:
+import adoption from "../../Images/adoption.png";
+import shelter from "../../Images/animal-shelter.png";
 
 export default function Welcome() {
-
+    // ... (Your component logic is here)
     return (
         <>
             <Head title="Welcome">

@@ -11,4 +11,11 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    resolve: {
+        alias: {
+            // Ito ay tumuturo sa resources/js folder (o resources folder mismo)
+            '@': path.resolve(__dirname, 'resources/js'),
+            '~': path.resolve(__dirname, 'resources'), // Maaari ding gamitin ang root resources
+        },
+    },
 });
