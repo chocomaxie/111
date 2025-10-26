@@ -1,35 +1,10 @@
-// // resources/js/Pages/Home.jsx
-
-// import React from 'react';
-// // 🚨 TINANGGAL: import { Inertia } from '@inertiajs/inertia';
-
-// // Kung gagamitin mo ang router functions (tulad ng visit, reload, etc.),
-// // gamitin ang bagong import:
-// // import { router } from '@inertiajs/react';
-
-// export default function Home(props) {
-//     // Kung gusto mong i-check ang status ng Inertia:
-//     // const { component, props } = router.page;
-
-//     return (
-//         <div>
-//             <h1>{props.message}</h1>
-//             {/* Optional: <button onClick={() => router.visit('/another-page')}>Go</button> */}
-//         </div>
-//     );
-// }
-
-
 // resources/js/Pages/Home.jsx
 
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 
-// 🚨 CHECK THE PATH: Kung ang images ay nasa resources/images,
-// Subukan nating i-set ang path galing sa root ng assets o public.
-// Para sa karamihan ng modern setups, kailangan mo ng tamang relative path:
-// Kung ang Home.jsx ay nasa resources/js/Pages, ang images ay nasa resources/images
-// Dapat itong maging:
+// 🚨 FINAL PATH FIX: Dapat ay akyatin ang dalawang level (../../)
+// at gamitin ang tamang Case (Images)
 import adoption from "../../Images/adoption.png";
 import shelter from "../../Images/animal-shelter.png";
 
