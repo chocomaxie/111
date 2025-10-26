@@ -1,6 +1,7 @@
 services:
-  - type: web
-    name: my-laravel-app
+  - type: docker
+    name: my-laravel-docker-app
+    dockerfilePath: ./dockerfile
     env: php
     buildCommand: composer install --optimize-autoloader --no-dev && npm install && npm run build
     startCommand: php artisan serve --host=0.0.0.0 --port=8000
