@@ -7,9 +7,10 @@ use Inertia\Inertia;
 
 class PageController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         return Inertia::render('Home', [
-            'message' => 'Hello from Inertia.js / render '
+            'message' => 'Baho ni ai ai'
         ]);
     }
 }
