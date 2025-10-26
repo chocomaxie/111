@@ -1,6 +1,7 @@
+# Use PHP 8.1 CLI as the base image
 FROM php:8.1-cli
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -11,23 +12,26 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm
 
-# Install Composer
+# Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set working directory
 WORKDIR /app
 
-# Copy your application code
-COPY . .
+# Copy composer files only to leverage Docker cache
+COPY composer.json composer.lock /app/
 
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
+# Install dependencies without dev packages, optimize autoloader
+RUN composer install --no-dev --optimize-autoloader
 
-# Install Node dependencies and build assets
-RUN npm install && npm run build
+# Copy the rest of the application code
+COPY . /app
 
-# Expose port
+# Optional: set permissions
+RUN chown -R www-data:www-data /app
+
+# Expose port if running a web server (if applicable)
 EXPOSE 8000
 
-# Start Laravel server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Command to run your app (for example, Laravel's artisan serve)
+CMD ["php", "artisan", "serve", "--host=0.0.0.0"]
