@@ -1,6 +1,6 @@
-import { DisableScroll } from '@/Components1/disable-scroll';
-import { PlusButton } from '@/Components1/plus-button';
-import { XButton } from '@/Components1/x-button';
+import { DisableScroll } from '../../Components1/disable-scroll.jsx';
+import { PlusButton } from '../../Components1/plus-button.jsx';
+import { XButton } from '../../Components1/x-button';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { route } from 'ziggy-js';
